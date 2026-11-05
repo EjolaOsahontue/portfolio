@@ -1,5 +1,7 @@
 # Pings Supabase once a day so a free project is not paused for inactivity.
-
+# Needs two repository secrets (Settings > Secrets and variables > Actions):
+#   VITE_SUPABASE_URL       e.g. https://abcdxyz.supabase.co
+#   VITE_SUPABASE_ANON_KEY  the public anon key (never the service_role key)
 name: Keep Supabase awake
 
 on:
@@ -16,17 +18,21 @@ jobs:
     steps:
       - name: Query the projects table
         env:
-          
-          
-            SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-            SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "Secrets are not set, nothing to ping."; exit 1
           fi
+          # tidy the values: remove spaces/line breaks, quotes and a trailing slash
+          URL=$(printf '%s' "$SUPABASE_URL" | tr -d ' \r\n"'"'"'')
+          KEY=$(printf '%s' "$SUPABASE_ANON_KEY" | tr -d ' \r\n"'"'"'')
+          URL="${URL%/}"
+          case "$URL" in http*) ;; *) URL="https://$URL" ;; esac
+          echo "Pinging host: ${URL#https://}"
           curl --fail --silent --show-error --max-time 30 \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/projects?select=id&limit=1"
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            "$URL/rest/v1/projects?select=id&limit=1"
           echo
           echo "Ping OK at $(date -u +%FT%TZ)"
