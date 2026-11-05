@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Osahontue</title>
+  <style>
+    :root { --ink: #14110b; --line: rgba(20, 17, 11, .22); --y: #f5c518; --paper: #fffdf3; }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--y); }
+    canvas { display: block; touch-action: none; }
+    body {
+      font-family: system-ui, sans-serif; color: var(--ink);
+      -webkit-user-select: none; user-select: none;
+    }
+
+    /* ---------- idle header ---------- */
+    #ui {
+      position: fixed; inset: 0 0 auto 0; padding: 28px 24px 0; text-align: center;
+      pointer-events: none; transition: opacity .6s ease;
+    }
+    #title { margin: 0; font-size: clamp(30px, 6vw, 64px); font-weight: 800; letter-spacing: -0.02em; }
+    #hint { margin: 6px 0 0; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; opacity: .7; }
+    .reading #ui { opacity: 0; }
+
+    /* ---------- top-right nav: About + Contact ---------- */
+    #nav {
+      position: fixed; top: 16px; right: 20px; z-index: 6; display: flex; gap: 8px;
+      font: 700 12px ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+      letter-spacing: .14em; text-transform: uppercase;
+    }
+    #nav button {
+      all: unset; cursor: pointer; padding: 9px 14px; border: 1.5px solid var(--ink);
+      color: var(--ink); background: transparent;
+    }
+    #nav button:hover { background: rgba(20, 17, 11, .08); }
+    #nav button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    #nav button.cta { background: var(--ink); color: var(--y); }
+    #nav button.cta:hover { background: #2b2619; }
+
+    /* ---------- tracklist ---------- */
+    #tracks {
+      position: fixed; left: 24px; top: 130px; width: 200px; z-index: 5;
+      font: 12px/1.4 ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+      letter-spacing: .04em;
+    }
+    #tracks summary {
+      cursor: pointer; list-style: none; text-transform: uppercase;
+      letter-spacing: .2em; font-weight: 700; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+    }
+    #tracks summary::-webkit-details-marker { display: none; }
+    #tracks summary::after { content: ' ▾'; opacity: .5; }
+    #tracks:not([open]) summary::after { content: ' ▸'; }
+    .side { margin-top: 14px; }
+    .side-h {
+      all: unset; cursor: pointer; display: block; width: 100%;
+      font-weight: 700; text-transform: uppercase; letter-spacing: .16em; opacity: .55; padding: 2px 0 4px;
+    }
+    .side-h:hover { opacity: 1; }
+    .track {
+      all: unset; cursor: pointer; display: flex; gap: 8px; align-items: baseline;
+      width: 100%; box-sizing: border-box; padding: 5px 0; border-bottom: 1px solid var(--line);
+    }
+    .track:hover { background: rgba(20, 17, 11, .06); }
+    .track .no { opacity: .5; }
+    .track .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .track .st { font-size: 9px; }
+    .track.on { font-weight: 700; }
+    .track.on .no::before { content: '▶ '; }
+    .empty { opacity: .45; padding: 5px 0; }
+    @media (max-width: 900px) {
+      #tracks { top: 12px; left: 12px; width: 220px; }
+      #tracks[open] {
+        background: rgba(245, 197, 24, .94); padding: 10px 12px; border: 1px solid var(--line);
+        max-height: 70vh; overflow: auto;
+      }
+      #tracks:not([open]) { width: auto; }
+      #nav { top: 12px; right: 12px; }
+      #nav button { padding: 8px 10px; }
+      #ui { padding-top: 64px; }
+    }
+
+    /* ---------- drop ring (shows while you carry a vinyl) ---------- */
+    #drop {
+      position: fixed; left: 0; top: 0; z-index: 3; pointer-events: none;
+      border: 2px dashed var(--ink); border-radius: 50%; opacity: 0;
+      transition: opacity .25s ease, background .2s ease;
+    }
+    #drop.on  { opacity: .35; }
+    #drop.hot { opacity: .9; background: rgba(20, 17, 11, .08); }
+
+    /* ---------- crate labels ---------- */
+    #labels { position: fixed; inset: 0; pointer-events: none; transition: opacity .5s ease; }
+    .reading #labels { opacity: 0; }
+    .reading #labels .crate-label { pointer-events: none; }
+    .crate-label {
+      all: unset; position: absolute; left: 0; top: 0; cursor: pointer; pointer-events: auto;
+      font: 700 11px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .18em; text-transform: uppercase; color: var(--ink);
+      padding: 3px 8px; border: 1px solid var(--line); white-space: nowrap;
+    }
+    .crate-label:hover { background: rgba(20, 17, 11, .08); }
+    .crate-label small { opacity: .55; margin-left: 6px; font-weight: 400; }
+
+    /* ---------- reading stage (the big information view) ---------- */
+    #stage {
+      position: fixed; left: 270px; right: 48px; top: 36px; bottom: 30vh;
+      display: flex; flex-direction: column; justify-content: center; gap: 18px;
+      opacity: 0; pointer-events: none; transform: translateY(24px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .reading #stage {
+      opacity: 1; pointer-events: auto; transform: none;
+      transition: opacity .9s ease .7s, transform .9s ease .7s;
+    }
+    @media (max-width: 900px) { #stage { left: 20px; right: 20px; top: 64px; bottom: 34vh; } }
+    #back {
+      all: unset; cursor: pointer; align-self: flex-start;
+      font: 700 12px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .16em; text-transform: uppercase;
+      padding: 6px 12px; border: 1px solid var(--line);
+    }
+    #back:hover { background: rgba(20, 17, 11, .08); }
+    #kicker {
+      margin: 0; font: 700 13px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .2em; text-transform: uppercase; opacity: .65;
+    }
+    #name {
+      margin: 0; font-weight: 800; letter-spacing: -0.03em; line-height: .95;
+      font-size: clamp(44px, 9vw, 132px); text-wrap: balance;
+    }
+    #desc {
+      margin: 0; max-width: 40ch; font-size: clamp(17px, 2.1vw, 28px); line-height: 1.4;
+      min-height: 3em;
+    }
+    #tech { display: flex; flex-wrap: wrap; gap: 8px; opacity: 0; transition: opacity .8s ease; }
+    #tech.show { opacity: 1; }
+    #tech span {
+      font: 700 12px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .1em; text-transform: uppercase; padding: 5px 10px; border: 1px solid var(--ink);
+    }
+    #links { display: flex; flex-wrap: wrap; gap: 10px; }
+    #links a {
+      display: none; text-decoration: none; color: var(--ink); border: 1.5px solid var(--ink);
+      font: 700 13px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .14em;
+      text-transform: uppercase; padding: 12px 20px;
+    }
+    #links a.show { display: inline-block; }
+    #links a:hover { background: rgba(20, 17, 11, .08); }
+    #links #more { background: var(--ink); color: var(--y); }
+    #links #more:hover { background: #2b2619; }
+
+    /* ---------- About / Contact drawer ---------- */
+    #drawer {
+      position: fixed; inset: 0; z-index: 20; visibility: hidden;
+      -webkit-user-select: text; user-select: text;
+      transition: visibility 0s linear .35s;
+    }
+    #drawer.open { visibility: visible; transition-delay: 0s; }
+    #drawer .scrim {
+      position: absolute; inset: 0; background: rgba(20, 17, 11, .45);
+      opacity: 0; transition: opacity .35s ease;
+    }
+    #drawer.open .scrim { opacity: 1; }
+    #drawer aside {
+      position: absolute; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); box-sizing: border-box;
+      background: var(--paper); border-left: 2px solid var(--ink);
+      padding: 28px max(24px, env(safe-area-inset-right, 0px)) 40px 28px;
+      overflow-y: auto; transform: translateX(100%); transition: transform .4s cubic-bezier(.2, .8, .2, 1);
+    }
+    #drawer.open aside { transform: none; }
+    #drawer .x {
+      all: unset; cursor: pointer; position: absolute; top: 14px; right: 16px;
+      width: 36px; height: 36px; text-align: center; font-size: 26px; line-height: 36px;
+      border: 1.5px solid var(--ink);
+    }
+    #drawer .x:hover { background: rgba(20, 17, 11, .08); }
+    #drawer .x:focus-visible, #drawer a:focus-visible, #drawer .mini:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    #dBody { display: flex; flex-direction: column; gap: 14px; padding-top: 28px; }
+    #dBody h2 { margin: 0; font-size: clamp(30px, 6vw, 44px); line-height: 1; letter-spacing: -0.03em; font-weight: 800; }
+    #dBody p { margin: 0; line-height: 1.6; max-width: 60ch; }
+    #dBody .k {
+      font: 700 12px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .2em; text-transform: uppercase; opacity: .6;
+    }
+    #dBody .lead { font-size: 18px; font-weight: 600; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chips span {
+      font: 700 12px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em;
+      text-transform: uppercase; padding: 5px 10px; border: 1px solid var(--ink);
+    }
+    .links { display: flex; flex-direction: column; margin-top: 8px; }
+    .row-link {
+      display: flex; justify-content: space-between; padding: 12px 0; color: var(--ink);
+      text-decoration: none; border-top: 1px solid var(--line);
+      font: 700 13px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase;
+    }
+    .row-link:last-child { border-bottom: 1px solid var(--line); }
+    .row-link:hover { background: rgba(245, 197, 24, .45); }
+    .contact { display: flex; flex-direction: column; gap: 10px; padding: 16px 0 6px; border-top: 1px solid var(--line); }
+    .addrline { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .addr { font: 700 17px ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+    .mini {
+      all: unset; cursor: pointer; font: 700 11px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .12em; text-transform: uppercase; padding: 5px 10px; border: 1.5px solid var(--ink);
+    }
+    .mini:hover { background: rgba(20, 17, 11, .08); }
+    .btn-fill {
+      align-self: flex-start; text-decoration: none; background: var(--ink); color: var(--y);
+      font: 700 13px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em;
+      text-transform: uppercase; padding: 12px 18px;
+    }
+    .btn-fill:hover { background: #2b2619; }
+  </style>
+</head>
+<body>
+  <div id="ui">
+    <h1 id="title">Osahontue</h1>
+    <p id="hint">Drag record to record player</p>
+  </div>
+
+  <nav id="nav" aria-label="Site">
+    <button type="button" data-open="about">About</button>
+    <button type="button" class="cta" data-open="contact">Contact me</button>
+  </nav>
+
+  <details id="tracks" open>
+    <summary>Tracklist</summary>
+    <div id="list"></div>
+  </details>
+  <script>
+    // on phones the tracklist starts collapsed so it never covers the About / Contact buttons
+    if (window.innerWidth <= 900) document.getElementById('tracks').removeAttribute('open');
+  </script>
+
+  <div id="drop"></div>
+  <div id="labels"></div>
+
+  <section id="stage">
+    <button id="back">← Back to the crates</button>
+    <p id="kicker"></p>
+    <h2 id="name"></h2>
+    <p id="desc"></p>
+    <div id="tech"></div>
+    <div id="links">
+      <a id="more">Full project page →</a>
+      <a id="live" target="_blank" rel="noopener">Open it live ↗</a>
+    </div>
+  </section>
+
+  <div id="drawer" aria-hidden="true">
+    <div class="scrim"></div>
+    <aside role="dialog" aria-modal="true" aria-labelledby="dTitle">
+      <button class="x" type="button" aria-label="Close">×</button>
+      <div id="dBody"></div>
+    </aside>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

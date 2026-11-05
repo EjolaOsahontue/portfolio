@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Project | Osahontue</title>
+  <meta name="description" content="A project by Ejola Osahontue." />
+  <style>
+    :root { --ink: #000; --paper: #fffdf3; --y: #f5c518; --line: rgba(20,17,11,.2); }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.65 system-ui, sans-serif; }
+    a { color: inherit; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-right, 0px)) 0 max(20px, env(safe-area-inset-left, 0px)); }
+    .mono { font: 700 12px ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; }
+
+    /* top bar */
+    .top { background: var(--y); border-bottom: 2px solid var(--ink); }
+    .top .wrap { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding-block: 14px; }
+    .top a { text-decoration: none; }
+    .top .nav { display: flex; gap: 8px; }
+    .btn, .top .nav a, .top .nav button {
+      display: inline-block; padding: 9px 14px; border: 1.5px solid var(--ink); text-decoration: none;
+      font: 700 12px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .14em; text-transform: uppercase;
+    }
+    button.btn, .top .nav button { background: transparent; color: inherit; cursor: pointer; }
+    .top .nav a:hover, .top .nav button:hover, .btn.ghost:hover { background: rgba(20,17,11,.1); }
+    .top .nav a.cta, .top .nav button.cta, .btn.fill { background: var(--ink); color: var(--y); }
+    .btn.fill:hover { background: #2b2619; }
+
+    /* hero */
+    .hero { padding-block: 56px 28px; display: grid; gap: 16px; }
+    .hero h1 { margin: 0; font-size: clamp(44px, 10vw, 104px); line-height: .95; letter-spacing: -.035em; font-weight: 800; text-wrap: balance; }
+    .hero .lead { margin: 0; font-size: clamp(19px, 2.4vw, 26px); line-height: 1.45; max-width: 36ch; }
+    .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .cover { width: 100%; max-height: 520px; object-fit: cover; display: block; border: 2px solid var(--ink); background: #eee; }
+
+    /* sections */
+    section.s { padding-block: 40px 0; display: grid; gap: 14px; }
+    section.s h2 { margin: 0; }
+    section.s p { margin: 0; max-width: 62ch; }
+    ul.feat { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; max-width: 62ch; }
+    ul.feat li { padding: 10px 0 10px 28px; border-top: 1px solid var(--line); position: relative; }
+    ul.feat li:last-child { border-bottom: 1px solid var(--line); }
+    ul.feat li::before { content: '▶'; position: absolute; left: 0; top: 13px; font-size: 11px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chips span { padding: 6px 12px; border: 1.5px solid var(--ink); font: 700 12px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+
+    .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .shot { all: unset; cursor: zoom-in; display: block; border: 2px solid var(--ink); background: #eee; aspect-ratio: 16 / 10; overflow: hidden; }
+    .shot:focus-visible { outline: 3px solid var(--y); outline-offset: 2px; }
+    .shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s; }
+    .shot:hover img { transform: scale(1.04); }
+
+    /* contact band */
+    .band { margin-top: 64px; background: var(--ink); color: var(--paper); }
+    .band .wrap { padding-block: 44px; display: grid; gap: 14px; }
+    .band h2 { margin: 0; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; letter-spacing: -.03em; color: var(--y); }
+    .band p { margin: 0; max-width: 52ch; }
+    .band .btn { border-color: var(--y); color: var(--y); }
+    .band .btn.fill { background: var(--y); color: var(--ink); }
+    .band .btn.ghost:hover { background: rgba(245,197,24,.15); }
+
+    .more { display: grid; gap: 0; }
+    .more a { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); text-decoration: none; }
+    .more a:last-child { border-bottom: 1px solid var(--line); }
+    .more a:hover { background: rgba(245,197,24,.4); }
+    footer { padding-block: 28px; opacity: .65; }
+    .state { padding-block: 90px; display: grid; gap: 14px; }
+
+    /* lightbox */
+    #lb { position: fixed; inset: 0; z-index: 50; background: rgba(20,17,11,.92); display: flex; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
+    #lb[hidden] { display: none; }
+    #lb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+    /* ---------- About / Contact drawer ---------- */
+    #drawer {
+      position: fixed; inset: 0; z-index: 20; visibility: hidden;
+      -webkit-user-select: text; user-select: text;
+      transition: visibility 0s linear .35s;
+    }
+    #drawer.open { visibility: visible; transition-delay: 0s; }
+    #drawer .scrim {
+      position: absolute; inset: 0; background: rgba(20, 17, 11, .45);
+      opacity: 0; transition: opacity .35s ease;
+    }
+    #drawer.open .scrim { opacity: 1; }
+    #drawer aside {
+      position: absolute; top: 0; right: 0; bottom: 0; width: min(460px, 100vw); box-sizing: border-box;
+      background: var(--paper); border-left: 2px solid var(--ink);
+      padding: 28px max(24px, env(safe-area-inset-right, 0px)) 40px 28px;
+      overflow-y: auto; transform: translateX(100%); transition: transform .4s cubic-bezier(.2, .8, .2, 1);
+    }
+    #drawer.open aside { transform: none; }
+    #drawer .x {
+      all: unset; cursor: pointer; position: absolute; top: 14px; right: 16px;
+      width: 36px; height: 36px; text-align: center; font-size: 26px; line-height: 36px;
+      border: 1.5px solid var(--ink);
+    }
+    #drawer .x:hover { background: rgba(20, 17, 11, .08); }
+    #drawer .x:focus-visible, #drawer a:focus-visible, #drawer .mini:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+    #dBody { display: flex; flex-direction: column; gap: 14px; padding-top: 28px; }
+    #dBody h2 { margin: 0; font-size: clamp(30px, 6vw, 44px); line-height: 1; letter-spacing: -0.03em; font-weight: 800; }
+    #dBody p { margin: 0; line-height: 1.6; max-width: 60ch; }
+    #dBody .k {
+      font: 700 12px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .2em; text-transform: uppercase; opacity: .6;
+    }
+    #dBody .lead { font-size: 18px; font-weight: 600; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chips span {
+      font: 700 12px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em;
+      text-transform: uppercase; padding: 5px 10px; border: 1px solid var(--ink);
+    }
+    .links { display: flex; flex-direction: column; margin-top: 8px; }
+    .row-link {
+      display: flex; justify-content: space-between; padding: 12px 0; color: var(--ink);
+      text-decoration: none; border-top: 1px solid var(--line);
+      font: 700 13px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em; text-transform: uppercase;
+    }
+    .row-link:last-child { border-bottom: 1px solid var(--line); }
+    .row-link:hover { background: rgba(245, 197, 24, .45); }
+    .contact { display: flex; flex-direction: column; gap: 10px; padding: 16px 0 6px; border-top: 1px solid var(--line); }
+    .addrline { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .addr { font: 700 17px ui-monospace, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+    .mini {
+      all: unset; cursor: pointer; font: 700 11px ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: .12em; text-transform: uppercase; padding: 5px 10px; border: 1.5px solid var(--ink);
+    }
+    .mini:hover { background: rgba(20, 17, 11, .08); }
+    .btn-fill {
+      align-self: flex-start; text-decoration: none; background: var(--ink); color: var(--y);
+      font: 700 13px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em;
+      text-transform: uppercase; padding: 12px 18px;
+    }
+    .btn-fill:hover { background: #2b2619; }
+  </style>
+</head>
+<body>
+  <div id="app"><div class="wrap state"><p class="mono">Loading…</p></div></div>
+  <div id="drawer" aria-hidden="true">
+    <div class="scrim"></div>
+    <aside role="dialog" aria-modal="true" aria-labelledby="dTitle">
+      <button class="x" type="button" aria-label="Close">×</button>
+      <div id="dBody"></div>
+    </aside>
+  </div>
+
+  <div id="lb" hidden role="dialog" aria-label="Screenshot"><img alt="" /></div>
+  <noscript><div class="wrap state"><p>This page needs JavaScript to load the project.</p></div></noscript>
+  <script type="module" src="/src/project.js"></script>
+</body>
+</html>
