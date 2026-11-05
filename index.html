@@ -70,9 +70,10 @@
     @media (max-width: 900px) {
       #tracks { top: 12px; left: 12px; width: auto; }
       #tracks summary { padding: 8px 10px; border: 1px solid var(--line); background: rgba(245, 197, 24, .94); }
-      /* the list opens as a panel under the top row, so the About / Contact buttons stay visible */
+      /* the list opens as a panel below the name, in the empty space above the crates,
+         so neither the name nor the About / Contact buttons are covered */
       #tracks[open] #list {
-        position: fixed; left: 12px; right: 12px; top: 58px; max-height: calc(100vh - 140px); overflow: auto;
+        position: fixed; left: 12px; right: 12px; top: 140px; max-height: max(200px, calc(100vh - 140px - 40vh)); overflow: auto;
         background: rgba(245, 197, 24, .97); padding: 4px 14px 12px; border: 1px solid var(--line);
       }
       #nav { top: 12px; right: 12px; }
