@@ -16,8 +16,10 @@ jobs:
     steps:
       - name: Query the projects table
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          
+          
+            SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+            SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
             echo "Secrets are not set, nothing to ping."; exit 1
