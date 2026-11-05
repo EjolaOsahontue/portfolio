@@ -68,12 +68,13 @@
     .track.on .no::before { content: '▶ '; }
     .empty { opacity: .45; padding: 5px 0; }
     @media (max-width: 900px) {
-      #tracks { top: 12px; left: 12px; width: 220px; }
-      #tracks[open] {
-        background: rgba(245, 197, 24, .94); padding: 10px 12px; border: 1px solid var(--line);
-        max-height: 70vh; overflow: auto;
+      #tracks { top: 12px; left: 12px; width: auto; }
+      #tracks summary { padding: 8px 10px; border: 1px solid var(--line); background: rgba(245, 197, 24, .94); }
+      /* the list opens as a panel under the top row, so the About / Contact buttons stay visible */
+      #tracks[open] #list {
+        position: fixed; left: 12px; right: 12px; top: 58px; max-height: calc(100vh - 140px); overflow: auto;
+        background: rgba(245, 197, 24, .97); padding: 4px 14px 12px; border: 1px solid var(--line);
       }
-      #tracks:not([open]) { width: auto; }
       #nav { top: 12px; right: 12px; }
       #nav button { padding: 8px 10px; }
       #ui { padding-top: 64px; }
@@ -100,6 +101,10 @@
     }
     .crate-label:hover { background: rgba(20, 17, 11, .08); }
     .crate-label small { opacity: .55; margin-left: 6px; font-weight: 400; }
+    @media (max-width: 600px) {
+      .crate-label { font-size: 9px; letter-spacing: .08em; padding: 2px 5px; }
+      .crate-label small { display: none; }
+    }
 
     /* ---------- reading stage (the big information view) ---------- */
     #stage {
@@ -215,7 +220,7 @@
 <body>
   <div id="ui">
     <h1 id="title">Osahontue</h1>
-    <p id="hint">Drag record to record player</p>
+    <p id="hint">Drag to play</p>
   </div>
 
   <nav id="nav" aria-label="Site">

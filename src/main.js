@@ -21,6 +21,8 @@ const CRATE_GAP = 0.2             // gap between crates and turntable
 const MODEL_SCREEN_HEIGHT = 0.28  // model takes this fraction of the screen height
 const WIDTH_PAD = 1.8             // side room around the scene (bigger = smaller scene)
 const BOTTOM_MARGIN = 0.1         // empty space under the model
+const WIDTH_PAD_PORTRAIT = 1.2    // same as WIDTH_PAD but for tall phone screens
+const BOTTOM_MARGIN_PORTRAIT = 0.2
 const CAM_TILT = 0.18             // how much the camera looks down
 const FOLLOW = 0.35               // drag smoothness (smaller = floatier, 1 = instant)
 const DRAG_START = 6              // pixels you move before a drag begins
@@ -331,6 +333,8 @@ function setupParts() {
     labels.appendChild(el)
     f.label = el
   })
+  // neighbouring labels sit on alternating rows on narrow screens so they never overlap
+  ;[...folders].sort((a, b) => a.anchor.x - b.anchor.x).forEach((f, rank) => { f.row = rank % 2 })
 }
 
 // ================= SLEEVE ARTWORK =================
@@ -506,10 +510,13 @@ function buildTracklist() {
 function frameCamera() {
   const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))
   const dV = (modelH / MODEL_SCREEN_HEIGHT) / 2 / t
-  const dH = (modelW * WIDTH_PAD) / 2 / (t * camera.aspect)
+  // on a tall phone screen the scene fills most of the width and sits higher, not squashed at the very bottom
+  const portrait = camera.aspect < 0.8
+  const pad = portrait ? WIDTH_PAD_PORTRAIT : WIDTH_PAD
+  const dH = (modelW * pad) / 2 / (t * camera.aspect)
   const d = Math.max(dV, dH) / view.k
   const visH = 2 * d * t
-  const lookY = visH * (0.5 - BOTTOM_MARGIN)
+  const lookY = visH * (0.5 - (portrait ? BOTTOM_MARGIN_PORTRAIT : BOTTOM_MARGIN))
   camera.position.set(0, lookY + d * CAM_TILT, d)
   camera.lookAt(0, lookY, 0)
 }
@@ -772,7 +779,8 @@ renderer.setAnimationLoop(() => {
       tmp.copy(f.anchor).project(camera)
       const x = ((tmp.x + 1) / 2) * innerWidth
       const y = ((1 - tmp.y) / 2) * innerHeight
-      f.label.style.transform = `translate(${x}px, ${y}px) translate(-50%, 6px)`
+      const drop = innerWidth < 600 && f.row ? 30 : 6
+      f.label.style.transform = `translate(${x}px, ${y}px) translate(-50%, ${drop}px)`
     })
   }
   renderer.render(scene, camera)
