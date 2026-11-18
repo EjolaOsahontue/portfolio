@@ -1,3 +1,4 @@
+// Project details page: project.html#project-slug
 import { loadContent, loadSite } from './supabase.js'
 import { fallbackProjects } from './fallback.js'
 import './panels.js'   // About / Contact drawer, opens right on this page
@@ -95,9 +96,14 @@ function render(p, list, site) {
       ? el('div', { class: 'chips' }, p.tech.map((t) => el('span', { text: t }))) : null),
     section('Screenshots', shots.length
       ? el('div', { class: 'shots' }, shots.map((u, i) => {
-          const b = el('button', { class: 'shot', type: 'button', 'aria-label': `Enlarge screenshot ${i + 1}` },
-            el('img', { src: u, alt: `${p.name} screenshot ${i + 1}`, loading: 'lazy' }))
+          const img = el('img', { src: u, alt: `${p.name} screenshot ${i + 1}`, decoding: 'async' })
+          const b = el('button', { class: 'shot', type: 'button', 'aria-label': `Enlarge screenshot ${i + 1}` }, img)
           b.addEventListener('click', () => openLightbox(u, `${p.name} screenshot ${i + 1}`))
+          // a link that does not load shows a note instead of an empty box
+          img.addEventListener('error', () => {
+            b.replaceChildren(el('span', { class: 'mono', text: 'This image could not be loaded.' }))
+            b.style.padding = '12px'
+          })
           return b
         })) : null),
     section('What I learned', p.learned ? el('p', { text: p.learned }) : null),
@@ -115,7 +121,13 @@ function render(p, list, site) {
 }
 
 async function main() {
+  // if the database is slow to answer (a free project that was asleep), say so instead of sitting blank
+  const slow = setTimeout(() => {
+    const t = app.querySelector('.state p')
+    if (t) t.textContent = 'Loading… the database is waking up, one moment.'
+  }, 2000)
   const [content, site] = await Promise.all([loadContent(), loadSite()])
+  clearTimeout(slow)
   const list = content ? content.projects : fallbackProjects
   const slug = decodeURIComponent(location.hash.replace(/^#/, ''))
   const p = list.find((x) => x.slug === slug)

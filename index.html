@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preload" href="/models/scene.glb" as="fetch" crossorigin="anonymous" />
   <title>Osahontue</title>
   <style>
     :root { --ink: #14110b; --line: rgba(20, 17, 11, .22); --y: #f5c518; --paper: #fffdf3; }
@@ -36,6 +37,15 @@
     #nav button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
     #nav button.cta { background: var(--ink); color: var(--y); }
     #nav button.cta:hover { background: #2b2619; }
+
+    /* ---------- loading message ---------- */
+    #loading {
+      position: fixed; inset: 0; z-index: 4; display: grid; place-items: center; pointer-events: none;
+      font: 700 12px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .18em; text-transform: uppercase;
+      transition: opacity .5s ease;
+    }
+    #loading.done { opacity: 0; }
+    #loadTxt { padding: 8px 14px; border: 1px solid var(--line); text-align: center; max-width: 80vw; }
 
     /* ---------- tracklist ---------- */
     #tracks {
@@ -219,6 +229,7 @@
   </style>
 </head>
 <body>
+  <div id="loading" role="status"><span id="loadTxt">Loading the record shop…</span></div>
   <div id="ui">
     <h1 id="title">Osahontue</h1>
     <p id="hint">Drag to play</p>

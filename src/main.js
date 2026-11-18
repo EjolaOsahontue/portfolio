@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import gsap from 'gsap'
 import { fallbackFolders, fallbackProjects } from './fallback.js'
 import { loadContent } from './supabase.js'
@@ -179,10 +180,22 @@ function whenVinyl(s, cb) {
 }
 
 // ================= LOAD CONTENT, THEN THE MODEL =================
-loadContent().then((content) => {
+// The model download starts at once and runs alongside the database request, so the page
+// waits for the slower of the two instead of the sum of both.
+const loadingEl = document.getElementById('loading')
+const loadingTxt = document.getElementById('loadTxt')
+const loader = new GLTFLoader()
+loader.setMeshoptDecoder(MeshoptDecoder)   // lets the model be shipped compressed (see README tips)
+const modelP = loader.loadAsync(`${import.meta.env.BASE_URL}models/scene.glb`, (e) => {
+  if (loadingTxt && e.lengthComputable && e.total) {
+    loadingTxt.textContent = `Loading the record shop… ${Math.round((e.loaded / e.total) * 100)}%`
+  }
+})
+
+Promise.all([loadContent(), modelP]).then(([content, gltf]) => {
   if (content) { folders = content.folders; projects = content.projects }
 
-  new GLTFLoader().load(`${import.meta.env.BASE_URL}models/scene.glb`, (gltf) => {
+  {
     model = gltf.scene
     scene.add(model)
     model.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true } })
@@ -205,7 +218,13 @@ loadContent().then((content) => {
     } catch (err) {
       console.error('Setup failed:', err)
     }
-  }, undefined, (e) => console.error('Could not load model', e))
+  }
+}).catch((e) => {
+  console.error('Could not load model', e)
+  if (loadingTxt) loadingTxt.textContent = 'The 3D scene could not load. Please refresh the page.'
+  return 'failed'
+}).then((r) => {
+  if (r !== 'failed' && loadingEl) loadingEl.classList.add('done')
 })
 
 function setupParts() {

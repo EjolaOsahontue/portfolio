@@ -122,8 +122,26 @@ function armDelete(btn, action) {
   })
 }
 
+// Big photos make pages slow. Shrink anything larger than 1600 px (or 400 KB) to WebP before uploading.
+async function shrink(file) {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return file
+  try {
+    const bmp = await createImageBitmap(file)
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height))
+    if (k === 1 && file.size < 400 * 1024) return file
+    const c = document.createElement('canvas')
+    c.width = Math.round(bmp.width * k)
+    c.height = Math.round(bmp.height * k)
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height)
+    const blob = await new Promise((res) => c.toBlob(res, 'image/webp', 0.85))
+    if (!blob || blob.size >= file.size) return file
+    return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.webp', { type: 'image/webp' })
+  } catch (_) { return file }
+}
+
 async function upload(file, prefix) {
   if (!file.type.startsWith('image/')) throw new Error('That file is not an image.')
+  file = await shrink(file)
   if (file.size > MAX_MB * 1024 * 1024) throw new Error(`Image is over ${MAX_MB} MB. Make it smaller first.`)
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')
   const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`

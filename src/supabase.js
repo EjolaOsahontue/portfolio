@@ -18,7 +18,7 @@ export async function loadContent() {
         supabase.from('folders').select('*').eq('published', true).order('sort_order'),
         supabase.from('projects').select('*').eq('published', true).order('sort_order'),
       ]),
-      6000
+      4500
     )
     if (f.error) throw f.error
     if (p.error) throw p.error
