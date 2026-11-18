@@ -17,7 +17,7 @@ function toast(text, bad = false) {
   t.textContent = text
   t.className = 'show' + (bad ? ' bad' : '')
   clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => (t.className = ''), 3500)
+  toastTimer = setTimeout(() => (t.className = ''), bad ? 10000 : 4500)
 }
 
 function friendly(err) {
@@ -309,10 +309,12 @@ function projectForm(panel, p) {
     if (!isNew) row.id = p.id
     const btn = form.querySelector('button[type=submit]')
     btn.disabled = true
-    const { error } = await supabase.from('projects').upsert(row)
+    const { data, error } = await supabase.from('projects').upsert(row).select().maybeSingle()
     btn.disabled = false
     if (error) return toast(friendly(error), true)
-    toast('Saved.')
+    if (!data) return toast('The save did not go through (no row came back). Sign out and in again, then retry.', true)
+    // say what the database really holds, so a save that did not stick is obvious
+    toast(`Saved. Now stored: ${(data.screenshots || []).length} screenshot(s), cover ${data.cover_image ? 'set' : 'empty'}.`)
     state.editing = null
     await dashboard()
   })
