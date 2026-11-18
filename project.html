@@ -6,7 +6,7 @@
   <title>Project | Osahontue</title>
   <meta name="description" content="A project by Ejola Osahontue." />
   <style>
-    :root { --ink: #000; --paper: #fffdf3; --y: #f5c518; --line: rgba(20,17,11,.2); }
+    :root { --ink: #14110b; --paper: #fffdf3; --y: #f5c518; --line: rgba(20,17,11,.2); }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.65 system-ui, sans-serif; }
@@ -46,11 +46,13 @@
     .chips { display: flex; flex-wrap: wrap; gap: 8px; }
     .chips span { padding: 6px 12px; border: 1.5px solid var(--ink); font: 700 12px ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
 
-    .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-    .shot { all: unset; cursor: zoom-in; display: block; border: 2px solid var(--ink); background: #eee; aspect-ratio: 16 / 10; overflow: hidden; }
+    /* masonry columns: every image keeps its own shape, nothing is cropped */
+    .shots { columns: 2 320px; column-gap: 16px; }
+    .shot { all: unset; cursor: zoom-in; display: block; width: 100%; box-sizing: border-box; margin: 0 0 16px;
+      break-inside: avoid; border: 2px solid var(--ink); background: #eee; overflow: hidden; }
     .shot:focus-visible { outline: 3px solid var(--y); outline-offset: 2px; }
-    .shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .35s; }
-    .shot:hover img { transform: scale(1.04); }
+    .shot img { width: 100%; height: auto; display: block; transition: transform .35s; }
+    .shot:hover img { transform: scale(1.02); }
 
     /* contact band */
     .band { margin-top: 64px; background: var(--ink); color: var(--paper); }
